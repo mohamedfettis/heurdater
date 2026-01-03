@@ -432,8 +432,9 @@
                         ctx.fillText(data.line3, leftPadding, currentY);
                         currentY += lineHeight;
 
-                        // Truncate address if too long (keep within image bounds)
-                        const maxWidth = img.width - (leftPadding * 2);
+                        // Truncate address if too long (account for stroke width)
+                        const strokeWidth = ctx.lineWidth;
+                        const maxWidth = img.width - (leftPadding * 2) - (strokeWidth * 4);
                         let addressText = data.line4;
                         let textWidth = ctx.measureText(addressText).width;
 
