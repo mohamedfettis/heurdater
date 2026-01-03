@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTO Geotag - Horodatage Photo</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #22c55e;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --accent-color: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .custom-text-section {
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f1f5f9;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:disabled {
+            background-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .btn-upload {
+            background-color: var(--primary-color);
+            color: white;
+            display: block;
+        }
+
+        .btn-upload:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-download {
+            background-color: var(--success-color);
+            color: white;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .btn-download:hover {
+            background-color: #16a34a;
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            word-break: break-word;
+        }
+
+        .status.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+            display: block;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .status.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            display: block;
+            border-left: 4px solid #ef4444;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+            border: 1px solid #e2e8f0;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .debug-hint {
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--accent-color);
+            text-align: center;
+        }
+
+        .version {
+            position: fixed;
+            bottom: 5px;
+            right: 5px;
+            font-size: 10px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>PTO Geotag Pro</h1>
+
+        <div class="upload-section">
+            <div class="custom-text-section">
+                <label class="toggle-container">
+                    <input type="checkbox" id="enableCustomText" checked>
+                    Ligne 1 Personnalisée
+                </label>
+                <input type="text" id="customText" placeholder="Entrez le texte pour la ligne 1" value="PTO">
+            </div>
+
+            <label for="imageInput" class="btn btn-upload">
+                <span id="btnText">📷 Prendre/Choisir une photo</span>
+            </label>
+            <input type="file" id="imageInput" accept="image/*" capture="environment">
+        </div>
+
+        <div id="statusMessage" class="status"></div>
+
+        <div class="preview-container" id="previewContainer">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+
+        <button id="downloadBtn" class="btn btn-download">📥 Télécharger la photo</button>
+
+        <div class="debug-hint">
+            Autorisez la localisation pour obtenir l'adresse complète.
+        </div>
+    </div>
+
+    <div class="version">v7.0 - Haute qualité</div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const customTextInput = document.getElementById('customText');
+        const enableCustomText = document.getElementById('enableCustomText');
+        const statusMessage = document.getElementById('statusMessage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const mainCanvas = document.getElementById('mainCanvas');
+        const previewContainer = document.getElementById('previewContainer');
+        const btnText = document.getElementById('btnText');
+
+        let fileName = "PTO_Photo.jpg";
+
+        enableCustomText.addEventListener('change', (e) => {
+            customTextInput.disabled = !e.target.checked;
+        });
+
+        imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            resetUI();
+            showStatus("🔄 Initialisation du traitement...", "info");
+            btnText.innerHTML = '<span class="loader"></span>Traitement...';
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            let latitude = 0;
+            let longitude = 0;
+            let address = "Localisation non disponible";
+
+            try {
+                showStatus("📍 Récupération de la position GPS...", "info");
+                const position = await getGPS();
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+
+                showStatus("🌍 Récupération de l'adresse...", "info");
+                address = await getAddress(latitude, longitude);
+            } catch (error) {
+                console.error(error);
+                showStatus("⚠️ GPS impossible: " + error.message + ". Traitement sans coordonnées.", "info");
+            }
+
+            try {
+                showStatus("🎨 Génération de l'image...", "info");
+                await processImage(file, {
+                    line1: enableCustomText.checked ? customTextInput.value : "",
+                    line2: `${dateStr} ${timeStr}`,
+                    line3: latitude !== 0 ? `${latitude.toFixed(7)} ; ${longitude.toFixed(7)}` : "GPS non disponible",
+                    line4: address
+                });
+
+                const ts = dateStr.replaceAll('/', '-') + "_" + timeStr.replaceAll(':', '-');
+                fileName = `PTO_${ts}.jpg`;
+
+                showStatus("✅ Photo traitée avec succès !", "info");
+                downloadBtn.style.display = "block";
+                previewContainer.style.display = "block";
+                btnText.textContent = "📷 Prendre/Choisir une autre photo";
+            } catch (error) {
+                console.error(error);
+                showStatus("❌ Erreur critique : " + error.message, "error");
+                btnText.textContent = "🔄 Réessayer";
+            }
+        });
+
+        function showStatus(text, type) {
+            statusMessage.textContent = text;
+            statusMessage.className = `status ${type}`;
+            statusMessage.style.display = "block";
+        }
+
+        function resetUI() {
+            statusMessage.style.display = "none";
+            downloadBtn.style.display = "none";
+            previewContainer.style.display = "none";
+        }
+
+        function getGPS() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    return reject(new Error("Géolocalisation non supportée par votre navigateur"));
+                }
+
+                // Show helpful message
+                console.log("Demande de géolocalisation en cours...");
+
+                navigator.geolocation.getCurrentPosition(resolve, (err) => {
+                    let msg = "Erreur inconnue";
+                    switch (err.code) {
+                        case err.PERMISSION_DENIED:
+                            msg = "Vous devez autoriser la localisation dans les paramètres du navigateur";
+                            break;
+                        case err.POSITION_UNAVAILABLE:
+                            msg = "Position GPS indisponible (activez le GPS sur votre téléphone)";
+                            break;
+                        case err.TIMEOUT:
+                            msg = "Délai dépassé (vérifiez votre connexion GPS)";
+                            break;
+                    }
+                    reject(new Error(msg));
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,  // Increased to 15 seconds for mobile
+                    maximumAge: 5000  // Allow cached position up to 5 seconds old
+                });
+            });
+        }
+
+        async function getAddress(lat, lon) {
+            if (lat === 0 && lon === 0) return "Adresse non disponible";
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&zoom=18`, {
+                    headers: { 'Accept-Language': 'fr' }
+                });
+                if (!response.ok) throw new Error("API non accessible");
+                const data = await response.json();
+
+                const addr = data.address || {};
+                const parts = [];
+
+                if (addr.house_number) parts.push(addr.house_number);
+                if (addr.road) parts.push(addr.road);
+                if (addr.postcode) parts.push(addr.postcode);
+                if (addr.city || addr.town || addr.village) parts.push(addr.city || addr.town || addr.village);
+
+                return parts.length > 0 ? parts.join(' ') : (data.display_name || "Adresse inconnue");
+            } catch (error) {
+                return "Adresse non disponible";
+            }
+        }
+
+        function processImage(file, data) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const ctx = mainCanvas.getContext('2d');
+
+                        mainCanvas.width = img.width;
+                        mainCanvas.height = img.height;
+
+                        // Draw original image (strips EXIF metadata)
+                        ctx.drawImage(img, 0, 0);
+
+                        // CRITICAL: Match the reference image style EXACTLY
+                        // Larger font size for better quality (3.5% of height instead of 2.2%)
+                        const baseFontSize = Math.round(img.height * 0.035);
+                        // Very tight line spacing (1.1x font size - very compact)
+                        const lineHeight = baseFontSize * 1.1;
+                        // Minimal left padding (very close to edge, ~0.8% of width)
+                        const leftPadding = Math.round(img.width * 0.008);
+                        // Minimal vertical padding (~0.5% of height)
+                        const verticalPadding = Math.round(img.height * 0.005);
+
+                        // Calculate text area height for exactly 4 lines
+                        const numLines = 4;
+                        const textAreaHeight = (lineHeight * numLines) + (verticalPadding * 2);
+
+                        // NO BACKGROUND BOX - text directly on image
+                        // Instead, use text stroke (outline) for better visibility
+
+                        // Enable high-quality text rendering
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+
+                        // Text style: WHITE, BOLD, Sans-serif (matching reference)
+                        ctx.fillStyle = "#FFFFFF";
+                        ctx.font = `bold ${baseFontSize}px Arial, Helvetica, sans-serif`;
+                        ctx.textAlign = "left";
+                        ctx.textBaseline = "top";
+
+                        // Add thick black stroke (outline) around text - matching reference image
+                        ctx.strokeStyle = "#000000";  // Pure black
+                        ctx.lineWidth = Math.max(3, baseFontSize * 0.15);  // Thicker outline
+                        ctx.lineJoin = "round";
+                        ctx.miterLimit = 2;
+
+                        const startY = img.height - textAreaHeight + verticalPadding;
+
+
+                        // Draw exactly 4 lines (matching reference layout)
+                        // Use stroke first, then fill for better visibility
+                        let currentY = startY;
+
+                        if (data.line1) {
+                            ctx.strokeText(data.line1, leftPadding, currentY);
+                            ctx.fillText(data.line1, leftPadding, currentY);
+                            currentY += lineHeight;
+                        }
+
+                        ctx.strokeText(data.line2, leftPadding, currentY);
+                        ctx.fillText(data.line2, leftPadding, currentY);
+                        currentY += lineHeight;
+
+                        ctx.strokeText(data.line3, leftPadding, currentY);
+                        ctx.fillText(data.line3, leftPadding, currentY);
+                        currentY += lineHeight;
+
+                        ctx.strokeText(data.line4, leftPadding, currentY);
+                        ctx.fillText(data.line4, leftPadding, currentY);
+
+                        resolve();
+                    };
+                    img.onerror = () => reject(new Error("Erreur de chargement de l'image"));
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            try {
+                const link = document.createElement('a');
+                link.download = fileName;
+                // High quality JPEG (98% instead of 92%)
+                link.href = mainCanvas.toDataURL('image/jpeg', 0.98);
+                link.click();
+            } catch (e) {
+                showStatus("❌ Erreur téléchargement: " + e.message, "error");
+            }
+        });
+    </script>
+
+</body>
+
+</html>
