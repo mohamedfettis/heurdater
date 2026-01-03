@@ -228,7 +228,7 @@
         </div>
     </div>
 
-    <div class="version">v7.2 - Galerie seule</div>
+    <div class="version">v7.3 - Texte optimisé</div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
@@ -380,14 +380,14 @@
                         ctx.drawImage(img, 0, 0);
 
                         // CRITICAL: Match the reference image style EXACTLY
-                        // Larger font size for better quality (3.5% of height instead of 2.2%)
-                        const baseFontSize = Math.round(img.height * 0.035);
-                        // Very tight line spacing (1.1x font size - very compact)
-                        const lineHeight = baseFontSize * 1.1;
-                        // Minimal left padding (very close to edge, ~0.8% of width)
-                        const leftPadding = Math.round(img.width * 0.008);
-                        // Minimal vertical padding (~0.5% of height)
-                        const verticalPadding = Math.round(img.height * 0.005);
+                        // Moderate font size (2.5% of height - not too big, not too small)
+                        const baseFontSize = Math.round(img.height * 0.025);
+                        // Tight line spacing
+                        const lineHeight = baseFontSize * 1.15;
+                        // Minimal left padding (very close to edge)
+                        const leftPadding = Math.round(img.width * 0.01);
+                        // Minimal vertical padding
+                        const verticalPadding = Math.round(img.height * 0.008);
 
                         // Calculate text area height for exactly 4 lines
                         const numLines = 4;
@@ -400,15 +400,15 @@
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
 
-                        // Text style: WHITE, BOLD, Sans-serif (matching reference)
+                        // Text style: WHITE, NORMAL weight (not bold), Sans-serif
                         ctx.fillStyle = "#FFFFFF";
-                        ctx.font = `bold ${baseFontSize}px Arial, Helvetica, sans-serif`;
+                        ctx.font = `${baseFontSize}px Arial, Helvetica, sans-serif`;  // Removed 'bold'
                         ctx.textAlign = "left";
                         ctx.textBaseline = "top";
 
-                        // Add thick black stroke (outline) around text - matching reference image
-                        ctx.strokeStyle = "#000000";  // Pure black
-                        ctx.lineWidth = Math.max(3, baseFontSize * 0.15);  // Thicker outline
+                        // Moderate black stroke (outline) - not too thick
+                        ctx.strokeStyle = "#000000";
+                        ctx.lineWidth = Math.max(2, baseFontSize * 0.1);  // Thinner outline
                         ctx.lineJoin = "round";
                         ctx.miterLimit = 2;
 
@@ -433,8 +433,22 @@
                         ctx.fillText(data.line3, leftPadding, currentY);
                         currentY += lineHeight;
 
-                        ctx.strokeText(data.line4, leftPadding, currentY);
-                        ctx.fillText(data.line4, leftPadding, currentY);
+                        // Truncate address if too long
+                        const maxWidth = img.width - (leftPadding * 2);
+                        let addressText = data.line4;
+                        let textWidth = ctx.measureText(addressText).width;
+
+                        // If text is too wide, truncate with ellipsis
+                        if (textWidth > maxWidth) {
+                            while (textWidth > maxWidth && addressText.length > 0) {
+                                addressText = addressText.substring(0, addressText.length - 1);
+                                textWidth = ctx.measureText(addressText + '...').width;
+                            }
+                            addressText += '...';
+                        }
+
+                        ctx.strokeText(addressText, leftPadding, currentY);
+                        ctx.fillText(addressText, leftPadding, currentY);
 
                         resolve();
                     };
