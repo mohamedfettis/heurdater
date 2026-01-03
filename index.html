@@ -99,6 +99,27 @@
             cursor: not-allowed;
         }
 
+        .custom-time {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .custom-time:disabled {
+            background-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            display: block;
+            margin-top: 5px;
+            color: var(--accent-color);
+            font-size: 12px;
+        }
+
         .btn {
             display: inline-block;
             padding: 12px 20px;
@@ -243,6 +264,15 @@
                 </select>
             </div>
 
+            <div class="custom-text-section">
+                <label class="toggle-container">
+                    <input type="checkbox" id="enableCustomTime">
+                    Modifier l'heure manuellement
+                </label>
+                <input type="time" id="customTime" class="custom-time" disabled step="1">
+                <small class="hint">Laissez décoché pour utiliser l'heure actuelle</small>
+            </div>
+
             <label for="imageInput" class="btn btn-upload">
                 <span id="btnText">�️ Choisir une photo</span>
             </label>
@@ -262,12 +292,14 @@
         </div>
     </div>
 
-    <div class="version">v9.0 - Liste phrases</div>
+    <div class="version">v9.1 - Heure personnalisée</div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
         const customTextInput = document.getElementById('customText');
         const enableCustomText = document.getElementById('enableCustomText');
+        const enableCustomTime = document.getElementById('enableCustomTime');
+        const customTimeInput = document.getElementById('customTime');
         const statusMessage = document.getElementById('statusMessage');
         const downloadBtn = document.getElementById('downloadBtn');
         const mainCanvas = document.getElementById('mainCanvas');
@@ -280,6 +312,15 @@
             customTextInput.disabled = !e.target.checked;
         });
 
+        enableCustomTime.addEventListener('change', (e) => {
+            customTimeInput.disabled = !e.target.checked;
+            if (e.target.checked && !customTimeInput.value) {
+                // Set current time as default when enabled
+                const now = new Date();
+                customTimeInput.value = now.toTimeString().substring(0, 8);
+            }
+        });
+
         imageInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -290,7 +331,14 @@
 
             const now = new Date();
             const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            // Use custom time if enabled, otherwise use current time
+            let timeStr;
+            if (enableCustomTime.checked && customTimeInput.value) {
+                timeStr = customTimeInput.value;
+            } else {
+                timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
 
             let latitude = 0;
             let longitude = 0;
