@@ -228,7 +228,7 @@
         </div>
     </div>
 
-    <div class="version">v7.3 - Texte optimisé</div>
+    <div class="version">v8.0 FINAL</div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
@@ -379,40 +379,39 @@
                         // Draw original image (strips EXIF metadata)
                         ctx.drawImage(img, 0, 0);
 
-                        // CRITICAL: Match the reference image style EXACTLY
-                        // Moderate font size (2.5% of height - not too big, not too small)
-                        const baseFontSize = Math.round(img.height * 0.025);
-                        // Tight line spacing
-                        const lineHeight = baseFontSize * 1.15;
-                        // Minimal left padding (very close to edge)
-                        const leftPadding = Math.round(img.width * 0.01);
-                        // Minimal vertical padding
-                        const verticalPadding = Math.round(img.height * 0.008);
+                        // EXACT MATCH to reference image "MUR_APRES"
+                        // Font size: approximately 2.8% of image height (measured from reference)
+                        const baseFontSize = Math.round(img.height * 0.028);
+                        // Very tight line spacing: 1.05x (measured from reference)
+                        const lineHeight = baseFontSize * 1.05;
+                        // Left padding: very close to edge (~1.2% of width)
+                        const leftPadding = Math.round(img.width * 0.012);
+                        // Bottom padding: small margin from bottom (~1% of height)
+                        const bottomPadding = Math.round(img.height * 0.01);
 
                         // Calculate text area height for exactly 4 lines
                         const numLines = 4;
-                        const textAreaHeight = (lineHeight * numLines) + (verticalPadding * 2);
+                        const textAreaHeight = (lineHeight * numLines) + bottomPadding;
 
-                        // NO BACKGROUND BOX - text directly on image
-                        // Instead, use text stroke (outline) for better visibility
+                        // NO BACKGROUND BOX - text directly on image (like reference)
 
                         // Enable high-quality text rendering
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
 
-                        // Text style: WHITE, NORMAL weight (not bold), Sans-serif
+                        // Text style: WHITE, BOLD (like reference "MUR_APRES")
                         ctx.fillStyle = "#FFFFFF";
-                        ctx.font = `${baseFontSize}px Arial, Helvetica, sans-serif`;  // Removed 'bold'
+                        ctx.font = `bold ${baseFontSize}px Arial, sans-serif`;
                         ctx.textAlign = "left";
                         ctx.textBaseline = "top";
 
-                        // Moderate black stroke (outline) - not too thick
+                        // Thick black stroke (outline) - matching reference image
                         ctx.strokeStyle = "#000000";
-                        ctx.lineWidth = Math.max(2, baseFontSize * 0.1);  // Thinner outline
+                        ctx.lineWidth = Math.max(3, baseFontSize * 0.12);  // Thick outline like reference
                         ctx.lineJoin = "round";
                         ctx.miterLimit = 2;
 
-                        const startY = img.height - textAreaHeight + verticalPadding;
+                        const startY = img.height - textAreaHeight;
 
 
                         // Draw exactly 4 lines (matching reference layout)
@@ -433,7 +432,7 @@
                         ctx.fillText(data.line3, leftPadding, currentY);
                         currentY += lineHeight;
 
-                        // Truncate address if too long
+                        // Truncate address if too long (keep within image bounds)
                         const maxWidth = img.width - (leftPadding * 2);
                         let addressText = data.line4;
                         let textWidth = ctx.measureText(addressText).width;
