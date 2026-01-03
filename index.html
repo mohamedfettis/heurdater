@@ -228,7 +228,7 @@
         </div>
     </div>
 
-    <div class="version">v8.1 - Troncature fixée</div>
+    <div class="version">v8.2 - Texte affiné</div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
@@ -380,8 +380,8 @@
                         ctx.drawImage(img, 0, 0);
 
                         // EXACT MATCH to reference image "MUR_APRES"
-                        // Font size: approximately 2.8% of image height (measured from reference)
-                        const baseFontSize = Math.round(img.height * 0.028);
+                        // Font size: 2.7% of image height (slightly reduced)
+                        const baseFontSize = Math.round(img.height * 0.027);
                         // Very tight line spacing: 1.05x (measured from reference)
                         const lineHeight = baseFontSize * 1.05;
                         // Left padding: very close to edge (~1.2% of width)
@@ -405,9 +405,9 @@
                         ctx.textAlign = "left";
                         ctx.textBaseline = "top";
 
-                        // Thick black stroke (outline) - matching reference image
+                        // Black stroke (outline) - slightly thinner
                         ctx.strokeStyle = "#000000";
-                        ctx.lineWidth = Math.max(3, baseFontSize * 0.12);  // Thick outline like reference
+                        ctx.lineWidth = Math.max(2, baseFontSize * 0.09);  // Reduced outline thickness
                         ctx.lineJoin = "round";
                         ctx.miterLimit = 2;
 
