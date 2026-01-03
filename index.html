@@ -84,6 +84,21 @@
             cursor: not-allowed;
         }
 
+        .custom-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .custom-select:disabled {
+            background-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+
         .btn {
             display: inline-block;
             padding: 12px 20px;
@@ -206,7 +221,26 @@
                     <input type="checkbox" id="enableCustomText" checked>
                     Ligne 1 Personnalisée
                 </label>
-                <input type="text" id="customText" placeholder="Entrez le texte pour la ligne 1" value="PTO">
+                <select id="customText" class="custom-select">
+                    <option value="PTO">PTO</option>
+                    <option value="PTO - Point de Terminaison Optique">PTO - Point de Terminaison Optique</option>
+                    <option value="MUR_AVANT">MUR_AVANT</option>
+                    <option value="MUR_APRES">MUR_APRES</option>
+                    <option value="DECHARGE">DECHARGE</option>
+                    <option value="INSTALLATION">INSTALLATION</option>
+                    <option value="MAINTENANCE">MAINTENANCE</option>
+                    <option value="REPARATION">REPARATION</option>
+                    <option value="VERIFICATION">VERIFICATION</option>
+                    <option value="CONTROLE">CONTROLE</option>
+                    <option value="AVANT TRAVAUX">AVANT TRAVAUX</option>
+                    <option value="APRES TRAVAUX">APRES TRAVAUX</option>
+                    <option value="EN COURS">EN COURS</option>
+                    <option value="TERMINE">TERMINE</option>
+                    <option value="FIBRE OPTIQUE">FIBRE OPTIQUE</option>
+                    <option value="CABLE">CABLE</option>
+                    <option value="ARMOIRE">ARMOIRE</option>
+                    <option value="BOITIER">BOITIER</option>
+                </select>
             </div>
 
             <label for="imageInput" class="btn btn-upload">
@@ -228,7 +262,7 @@
         </div>
     </div>
 
-    <div class="version">v8.2 - Texte affiné</div>
+    <div class="version">v9.0 - Liste phrases</div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
