@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PTO Geotag - Horodatage Photo</title>
+    <!-- piexifjs library for EXIF metadata -->
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -292,7 +294,7 @@
         </div>
     </div>
 
-    <div class="version">v9.1 - Heure personnalisée</div>
+    <div class="version">v9.2 - EXIF ajouté</div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
@@ -366,13 +368,20 @@
                     line4: address
                 });
 
+                // Store GPS and datetime for EXIF metadata
+                capturedLatitude = latitude;
+                capturedLongitude = longitude;
+                // Convert to EXIF datetime format: "YYYY:MM:DD HH:MM:SS"
+                const exifDate = now.toISOString().slice(0, 19).replace('T', ' ').replace(/-/g, ':');
+                capturedDateTime = exifDate;
+
                 const ts = dateStr.replaceAll('/', '-') + "_" + timeStr.replaceAll(':', '-');
                 fileName = `PTO_${ts}.jpg`;
 
                 showStatus("✅ Photo traitée avec succès !", "info");
                 downloadBtn.style.display = "block";
                 previewContainer.style.display = "block";
-                btnText.textContent = "�️ Choisir une autre photo";
+                btnText.textContent = "🖼️ Choisir une autre photo";
             } catch (error) {
                 console.error(error);
                 showStatus("❌ Erreur critique : " + error.message, "error");
@@ -541,15 +550,80 @@
             });
         }
 
+        // Store GPS coordinates for EXIF
+        let capturedLatitude = 0;
+        let capturedLongitude = 0;
+        let capturedDateTime = '';
+
         downloadBtn.addEventListener('click', () => {
             try {
+                // Get base64 image from canvas
+                const imageDataUrl = mainCanvas.toDataURL('image/jpeg', 0.98);
+
+                // Create EXIF data
+                const zeroth = {};
+                const exif = {};
+                const gps = {};
+
+                // Camera information
+                zeroth[piexif.ImageIFD.Make] = "Xiaomi";
+                zeroth[piexif.ImageIFD.Model] = "Redmi Note 13 Pro+ 5G";
+                zeroth[piexif.ImageIFD.Software] = "PTO Geotag Pro v9.2";
+
+                // Photo settings
+                exif[piexif.ExifIFD.FNumber] = [165, 100]; // f/1.65
+                exif[piexif.ExifIFD.ExposureTime] = [1, 33]; // 1/33s
+                exif[piexif.ExifIFD.ISOSpeedRatings] = 1000;
+                exif[piexif.ExifIFD.FocalLength] = [614, 100]; // 6.14mm
+                exif[piexif.ExifIFD.FocalLengthIn35mmFilm] = 28; // Equivalent 28mm
+                exif[piexif.ExifIFD.Flash] = 1; // Flash fired
+
+                // Date and time
+                if (capturedDateTime) {
+                    zeroth[piexif.ImageIFD.DateTime] = capturedDateTime;
+                    exif[piexif.ExifIFD.DateTimeOriginal] = capturedDateTime;
+                    exif[piexif.ExifIFD.DateTimeDigitized] = capturedDateTime;
+                }
+
+                // GPS coordinates (if available)
+                if (capturedLatitude !== 0 && capturedLongitude !== 0) {
+                    // Convert decimal degrees to degrees, minutes, seconds
+                    const latDeg = Math.abs(capturedLatitude);
+                    const latD = Math.floor(latDeg);
+                    const latM = Math.floor((latDeg - latD) * 60);
+                    const latS = Math.round(((latDeg - latD) * 60 - latM) * 60 * 100);
+
+                    const lonDeg = Math.abs(capturedLongitude);
+                    const lonD = Math.floor(lonDeg);
+                    const lonM = Math.floor((lonDeg - lonD) * 60);
+                    const lonS = Math.round(((lonDeg - lonD) * 60 - lonM) * 60 * 100);
+
+                    gps[piexif.GPSIFD.GPSLatitudeRef] = capturedLatitude >= 0 ? "N" : "S";
+                    gps[piexif.GPSIFD.GPSLatitude] = [[latD, 1], [latM, 1], [latS, 100]];
+                    gps[piexif.GPSIFD.GPSLongitudeRef] = capturedLongitude >= 0 ? "E" : "W";
+                    gps[piexif.GPSIFD.GPSLongitude] = [[lonD, 1], [lonM, 1], [lonS, 100]];
+                }
+
+                // Build EXIF object
+                const exifObj = { "0th": zeroth, "Exif": exif, "GPS": gps };
+                const exifBytes = piexif.dump(exifObj);
+
+                // Insert EXIF into image
+                const newImageDataUrl = piexif.insert(exifBytes, imageDataUrl);
+
+                // Download image with EXIF
                 const link = document.createElement('a');
                 link.download = fileName;
-                // High quality JPEG (98% instead of 92%)
-                link.href = mainCanvas.toDataURL('image/jpeg', 0.98);
+                link.href = newImageDataUrl;
                 link.click();
             } catch (e) {
-                showStatus("❌ Erreur téléchargement: " + e.message, "error");
+                console.error("EXIF error:", e);
+                // Fallback: download without EXIF if there's an error
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = mainCanvas.toDataURL('image/jpeg', 0.98);
+                link.click();
+                showStatus("⚠️ Photo téléchargée sans métadonnées EXIF", "info");
             }
         });
     </script>
