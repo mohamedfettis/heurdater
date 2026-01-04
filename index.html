@@ -483,23 +483,31 @@
                     img.onload = () => {
                         const ctx = mainCanvas.getContext('2d');
 
-                        // FORCE STANDARD WIDTH: Ensures text looks identical on all images
-                        // regardless of input resolution (upscaling small, downscaling large)
-                        const TARGET_WIDTH = 2048;
-                        const scaleFactor = TARGET_WIDTH / img.width;
+                        // HYBRID RESOLUTION LOGIC:
+                        // 1. If image is SMALL (< 2048px wide): Upscale to 2048px (fixes pixelated text).
+                        // 2. If image is LARGE (>= 2048px wide): Keep native resolution (preserves photo quality).
+                        const MIN_WIDTH = 2048;
+                        let finalWidth = img.width;
+                        let finalHeight = img.height;
 
-                        // Set canvas dimensions based on scale
-                        mainCanvas.width = TARGET_WIDTH;
-                        mainCanvas.height = img.height * scaleFactor;
+                        if (img.width < MIN_WIDTH) {
+                            const scaleFactor = MIN_WIDTH / img.width;
+                            finalWidth = MIN_WIDTH;
+                            finalHeight = img.height * scaleFactor;
+                        }
 
-                        // Draw image scaled to fill canvas
-                        // Use high quality interpolation for downscaling/upscaling
+                        // Set canvas dimensions
+                        mainCanvas.width = finalWidth;
+                        mainCanvas.height = finalHeight;
+
+                        // Draw image (scaled or original)
+                        // Use high quality interpolation for upscaling
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(img, 0, 0, mainCanvas.width, mainCanvas.height);
 
                         // EXACT MATCH to reference image "MUR_APRES"
-                        // Font size: 2.7% of HEIGHT (Calculated on standardized resolution)
+                        // Font size: 2.7% of HEIGHT (Dynamic Rule of 3 - works for both Upscaled and Native)
                         const baseFontSize = Math.round(mainCanvas.height * 0.027);
                         // Very tight line spacing: 1.05x (measured from reference)
                         const lineHeight = baseFontSize * 1.05;
