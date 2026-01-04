@@ -186,6 +186,37 @@
             overflow: hidden;
             display: none;
             border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        #previewImage {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #mainCanvas {
+            display: none;
+        }
+
+        .text-overlay {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            color: #FFFFFF;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.4;
+            pointer-events: none;
+            text-align: left;
+            text-shadow:
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000,
+                0 0 2px #000;
         }
 
         canvas {
@@ -284,6 +315,8 @@
         <div id="statusMessage" class="status"></div>
 
         <div class="preview-container" id="previewContainer">
+            <img id="previewImage" alt="Aperçu">
+            <div id="textOverlay" class="text-overlay"></div>
             <canvas id="mainCanvas"></canvas>
         </div>
 
@@ -306,6 +339,8 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const mainCanvas = document.getElementById('mainCanvas');
         const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const textOverlay = document.getElementById('textOverlay');
         const btnText = document.getElementById('btnText');
 
         let fileName = "PTO_Photo.jpg";
@@ -330,6 +365,13 @@
             resetUI();
             showStatus("🔄 Initialisation du traitement...", "info");
             btnText.innerHTML = '<span class="loader"></span>Traitement...';
+
+            // Show preview immediately using FileReader
+            const tempReader = new FileReader();
+            tempReader.onload = (ev) => {
+                previewImage.src = ev.target.result;
+            }
+            tempReader.readAsDataURL(file);
 
             const now = new Date();
             const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
