@@ -576,48 +576,78 @@
 
                         // Black stroke (outline) - slightly thinner
                         ctx.strokeStyle = "#000000";
-                        ctx.lineWidth = Math.max(2, baseFontSize * 0.09);  // Reduced outline thickness
+                        ctx.lineWidth = Math.max(2, baseFontSize * 0.09);
                         ctx.lineJoin = "round";
                         ctx.miterLimit = 2;
 
-                        const startY = img.height - textAreaHeight;
+                        // Calculate available width for text
+                        const strokeWidth = ctx.lineWidth;
+                        const maxWidth = mainCanvas.width - (leftPadding * 2) - (strokeWidth * 2);
 
+                        // WRAP TEXT FUNCTION
+                        function getWrappedLines(text, maxWidth) {
+                            const words = text.split(' ');
+                            const lines = [];
+                            let currentLine = words[0];
 
-                        // Draw exactly 4 lines (matching reference layout)
-                        // Use stroke first, then fill for better visibility
+                            for (let i = 1; i < words.length; i++) {
+                                const word = words[i];
+                                const width = ctx.measureText(currentLine + " " + word).width;
+                                if (width < maxWidth) {
+                                    currentLine += " " + word;
+                                } else {
+                                    lines.push(currentLine);
+                                    currentLine = word;
+                                }
+                            }
+                            lines.push(currentLine);
+                            return lines;
+                        }
+
+                        // Prepare lines (handling address wrapping)
+                        const addressLines = getWrappedLines(data.line4, maxWidth);
+
+                        // Count lines actually displayed
+                        // Line 1: Custom Text (if exists)
+                        // Line 2: Date
+                        // Line 3: GPS
+                        // Line 4+: Address (can be multiple)
+                        let totalLinesCount = 0;
+                        if (data.line1) totalLinesCount++;
+                        totalLinesCount++; // Date
+                        totalLinesCount++; // GPS
+                        totalLinesCount += addressLines.length; // Address
+
+                        // Calculate total height required
+                        const totalHeight = (lineHeight * totalLinesCount) + bottomPadding;
+                        const startY = mainCanvas.height - totalHeight;
+
+                        // DRAWING LOOP
                         let currentY = startY;
 
+                        // Draw Line 1 (Custom)
                         if (data.line1) {
                             ctx.strokeText(data.line1, leftPadding, currentY);
                             ctx.fillText(data.line1, leftPadding, currentY);
                             currentY += lineHeight;
                         }
 
+                        // Draw Line 2 (Date)
                         ctx.strokeText(data.line2, leftPadding, currentY);
                         ctx.fillText(data.line2, leftPadding, currentY);
                         currentY += lineHeight;
 
+                        // Draw Line 3 (GPS)
                         ctx.strokeText(data.line3, leftPadding, currentY);
                         ctx.fillText(data.line3, leftPadding, currentY);
                         currentY += lineHeight;
 
-                        // Truncate address if too long (account for stroke width)
-                        const strokeWidth = ctx.lineWidth;
-                        const maxWidth = img.width - (leftPadding * 2) - (strokeWidth * 4);
-                        let addressText = data.line4;
-                        let textWidth = ctx.measureText(addressText).width;
-
-                        // If text is too wide, truncate with ellipsis
-                        if (textWidth > maxWidth) {
-                            while (textWidth > maxWidth && addressText.length > 0) {
-                                addressText = addressText.substring(0, addressText.length - 1);
-                                textWidth = ctx.measureText(addressText + '...').width;
-                            }
-                            addressText += '...';
-                        }
-
-                        ctx.strokeText(addressText, leftPadding, currentY);
-                        ctx.fillText(addressText, leftPadding, currentY);
+                        // Draw Address Lines (Wrapped)
+                        addressLines.forEach(line => {
+                            ctx.strokeText(line, leftPadding, currentY);
+                            ctx.fillText(line, leftPadding, currentY);
+                            currentY += lineHeight;
+                        });
 
                         resolve();
                     };
