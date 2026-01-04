@@ -207,7 +207,8 @@
             color: #FFFFFF;
             font-family: Arial, sans-serif;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 11px;
+            /* Reduced from 14px */
             line-height: 1.4;
             pointer-events: none;
             text-align: left;
@@ -549,8 +550,8 @@
                         ctx.drawImage(img, 0, 0, mainCanvas.width, mainCanvas.height);
 
                         // EXACT MATCH to reference image "MUR_APRES"
-                        // Font size: 2.7% of HEIGHT (Dynamic Rule of 3 - works for both Upscaled and Native)
-                        const baseFontSize = Math.round(mainCanvas.height * 0.027);
+                        // Font size: 0.0135 (50% of the previous 0.027)
+                        const baseFontSize = Math.round(mainCanvas.height * 0.0135);
                         // Very tight line spacing: 1.05x (measured from reference)
                         const lineHeight = baseFontSize * 1.05;
                         // Left padding: very close to edge (~1.2% of width)
